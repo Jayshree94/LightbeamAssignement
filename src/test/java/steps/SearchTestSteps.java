@@ -1,13 +1,16 @@
+/*
+This is the step definition file for your Cucumber scenario.
+It includes step definitions for various actions like setting up API endpoints,
+sending requests, verifying responses, etc.
+ */
 package test.java.steps;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.JsonPath;
 import cucumber.api.PendingException;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import gherkin.JSONParser;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import main.java.common.Common;
@@ -25,13 +28,13 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static main.java.utility.TestSuiteHelper.getValueFromFile;
 
-public class testSteps {
+public class SearchTestSteps {
 
     @Given("^I set Post login api endpoint$")
     public String setPostEndpoint() throws IOException {
-        String base_uri = getValueFromFile("Base_URL");
-        String endPoint = getValueFromFile("Login_End_Point");
-        String URL = base_uri + endPoint;
+        String baseURI = getValueFromFile("baseURI");
+        String endPoint = getValueFromFile("loginEndPoint");
+        String URL = baseURI + endPoint;
         return URL;
     }
 
@@ -53,7 +56,7 @@ public class testSteps {
     @And("^Sends post HTTP request for login$")
     public Response setLoginAPI() throws IOException {
         Response resp = APIHelper.apiPost(setPostEndpoint(), setHeaders(), setRequestBody());
-        Common.ApiExecutorClass.BAREARTOKEN = JsonPath.read(resp.asString(), "$.responseData.Bearer_token");
+        Common.ApiExecutorClass.BEARERTOKEN = JsonPath.read(resp.asString(), "$.responseData.Bearer_token");
         return resp;
     }
 
@@ -62,17 +65,23 @@ public class testSteps {
         TestSuiteHelper.verifyApiResponse(setLoginAPI());
     }
 
+    @Then("^I received valid HTTP response code 400$")
+    public void verifyBadRequestStatusCode() throws IOException {
+        TestSuiteHelper.verifyApiResponseForBadRequest(setLoginAPI());
+    }
+
     @When("^I set the request header for get request$")
     public Map<String, String> iSetTheRequestHeaderForGetRequest() {
         Map<String, String> headers = new HashMap<>();
         headers.put(Constant.ApiTestConstants.CONTENTTYPEKEY, Constant.ApiTestConstants.CONTENTTYPEVALUE);
         return headers;
     }
+
     @Given("^I set the url for search API$")
     public String setUrlForSearchAPI() throws IOException {
-        String base_uri = getValueFromFile("Base_URL");
-        String endPoint = getValueFromFile("Search_End_Point");
-        String URL = base_uri + endPoint;
+        String baseURI = getValueFromFile("baseURI");
+        String endPoint = getValueFromFile("searchEndPoint");
+        String URL = baseURI + endPoint;
         return URL;
     }
 
@@ -80,8 +89,8 @@ public class testSteps {
     public Map<String, String> iSetTheParamsForSearchAPI() throws IOException {
         Map<String, String> json = new HashMap<>();
         json.put("type", getValueFromFile("Document_Type"));
-        json.put("offset", String.valueOf(0));
-        json.put("limit", String.valueOf(10));
+        json.put("offset", getValueFromFile("offSet"));
+        json.put("limit", getValueFromFile("limit"));
         return json;
     }
 
@@ -89,7 +98,7 @@ public class testSteps {
     public Map<String, String> setTheHeadersForSearchAPI() {
         Map<String, String> headers = new HashMap<>();
         headers.put(Constant.ApiTestConstants.CONTENTTYPEKEY, Constant.ApiTestConstants.CONTENTTYPEVALUE);
-        headers.put(Constant.ApiTestConstants.BAREARTOKEN, Common.ApiExecutorClass.BAREARTOKEN);
+        headers.put(Constant.ApiTestConstants.BAREARTOKEN, Common.ApiExecutorClass.BEARERTOKEN);
         return headers;
     }
 
@@ -101,19 +110,10 @@ public class testSteps {
         int resultCount = responseData.length();
         Assert.assertEquals(resultCount, expectedCount);
     }
+
     @And("^the user fires a search query for <searchQuery>$")
     public void theUserFiresASearchQueryForSearchQuery() throws IOException {
-        RequestSpecification rs = null;
-        try {
-            rs = given().contentType("application/json").headers(setTheHeadersForSearchAPI()).
-                    params(iSetTheParamsForSearchAPI());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        Response resp = rs.when().get(setUrlForSearchAPI()).then().extract().response();
-        JSONArray responseData = JsonPath.read(resp.asString(), "$.responseData");
-        Common.ApiExecutorClass.RESPONSEDATA = responseData;
-        throw new PendingException();
+
     }
 
     @Then("^the API should return search results with all values with same name \"([^\"]*)\"$")
@@ -127,4 +127,30 @@ public class testSteps {
         }
     }
 
+    @And("^the user fires a search query for \"([^\"]*)\"$")
+    public void theUserFiresASearchQueryFor(String arg0) throws Throwable {
+        RequestSpecification rs = null;
+        try {
+            rs = given().contentType("application/json").headers(setTheHeadersForSearchAPI()).
+                    params(iSetTheParamsForSearchAPI());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Response resp = rs.when().get(setUrlForSearchAPI()).then().extract().response();
+        Common.ApiExecutorClass.RESPONSE = resp;
+        JSONArray responseData = JsonPath.read(resp.asString(), "$.responseData");
+        Common.ApiExecutorClass.RESPONSEDATA = responseData;
+        throw new PendingException();
+    }
+
+    @Then("^the API should return (\\d+) bad request with validation message$")
+    public void theAPIShouldReturnBadRequestWithValidationMessage(String documentName) {
+        JSONArray responseData = Common.ApiExecutorClass.RESPONSEDATA;
+        for (int i = 0; i < responseData.length(); i++) {
+            JSONArray jsonArray = new JSONArray(responseData.getJSONArray(i).toString(i));
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            String name = jsonObject.getString("nameKey");
+            Assert.assertEquals(name, documentName);
+        }
+    }
 }

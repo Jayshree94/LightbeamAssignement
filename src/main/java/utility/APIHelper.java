@@ -1,3 +1,9 @@
+/*
+This code defines a class APIHelper in the package main.java.utility.
+It contains methods for making HTTP GET, POST, and PUT requests using REST Assured library.
+Each method logs the URL, headers, and data before making the request and returns the response.
+ */
+
 package main.java.utility;
 
 import com.cucumber.listener.Reporter;

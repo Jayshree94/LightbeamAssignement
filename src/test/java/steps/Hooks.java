@@ -1,3 +1,9 @@
+/*
+This code defines a class Hooks with an @After method that runs after each scenario
+to update the count using TestSuiteHelper.updateCount(). It also adds a shutdown hook to
+perform cleanup actions when the JVM is shutting down.
+*/
+
 package test.java.steps;
 
 

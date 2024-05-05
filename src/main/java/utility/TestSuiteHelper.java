@@ -1,3 +1,8 @@
+/*
+This code defines a class TestSuiteHelper in the package main.java.utility.
+It contains methods for verifying API responses, updating test counts, getting report paths,
+and retrieving values from a properties file.
+ */
 package main.java.utility;
 
 import com.cucumber.listener.Reporter;
@@ -18,6 +23,11 @@ public class TestSuiteHelper {
     public static void verifyApiResponse(Response resp) {
         Reporter.addStepLog("Response -----------------------> " + resp.getBody().asString());
         Assert.assertEquals(resp.getStatusCode(), 200);
+    }
+
+    public static void verifyApiResponseForBadRequest(Response resp) {
+        Reporter.addStepLog("Response -----------------------> " + resp.getBody().asString());
+        Assert.assertEquals(resp.getStatusCode(), 400);
     }
 
     public static void updateCount(String status) {

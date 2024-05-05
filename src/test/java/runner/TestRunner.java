@@ -1,4 +1,10 @@
-package runner;
+/*
+This code defines a test runner class TestRunner in the package runner.
+It configures Cucumber options for feature files location, step definitions package, and plugins.
+It also sets up Extent report properties before the test execution and loads XML configuration
+for the Extent report after the test execution.
+ */
+package test.java.runner;
 
 import com.cucumber.listener.ExtentProperties;
 import com.cucumber.listener.Reporter;
